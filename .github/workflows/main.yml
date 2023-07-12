@@ -2,7 +2,30 @@ permissions:
   id-token: write # This is required for requesting the JWT
   contents: read  # This is required for actions/checkout
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      rg-name:
+        type: string
+        description: 'Resource Group Name'
+        required: true
+      rg-region:
+        type: choice
+        description: 'Resource Group Region'
+        required: true
+        default: 'japaneast'
+        options:
+          - 'japaneast'
+          - 'japanwest'
+      owner:
+        type: string
+        description: 'Owner UPN'
+        required: true
+      department:
+        type: string
+        description: 'Department'
+        required: true
+
 
 
 jobs:
@@ -17,7 +40,41 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           branch: ${{ github.ref_name }}
 
-      - name: 'Run az commands'
+      - name: 'install az cli extension for blueprint'
         run: |
-          az account show
-          az group list
+          az extension add --name blueprint
+      - name: 'create security gorup of resource group owner'
+        run: |
+          # オーナーグループの作成
+          GROUP_ID=$(az ad group create --display-name ${{ github.event.inputs.rg-name }}-owner --mail-nickname ${{ github.event.inputs.rg-name }}-owner --force-string --query objectId -o tsv)
+          # オーナーユーザーのObjectIDを取得
+          OWNER_ID=$(az ad user show --id ${{ github.event.inputs.owner }} --query objectId -o tsv)
+          # オーナーグループにオーナーユーザーを追加
+          az ad group member add --group $GROUP_ID --member-id $OWNER_ID
+          # GROUP_IDを環境変数にセット
+          echo "GROUP_ID=$GROUP_ID" >> $GITHUB_ENV
+
+      - name: 'create parameters file'
+        run: |
+          # ブループリントのパラメータファイルを作成
+          echo "{
+            \"tagValue\": {
+              \"value\": \"${{ github.event.inputs.rg-name }}\"
+            },
+            \"rgRegion\": {
+              \"value\": \"${{ github.event.inputs.rg-region }}\"
+            },
+            \"[ユーザー名またはアプリケーション名]:所有者_RoleAssignmentName_1\": {
+              \"value\": \"${GROUP_ID}\"
+            },
+            \"リソースグループにタグを追加する_tagValue\": {
+              \"value\": \"${{ github.event.inputs.department }}\"
+            }
+          }" > parameters.json
+
+      - name: 'create blueprint assignment'
+        run: |
+          # ブループリントの割り当て
+          #
+          az blueprint assignment create --name assignment-${{ github.event.inputs.rg-name }} --subscription ${{ secrets.SUBSCRIPTION_ID }} --identity-type SystemAssigned --location ${{ github.event.inputs.rg-region }} --resource-group-value artifact_name=Application-RG location=
+          ${{ github.event.inputs.rg-region }} name=test2-rg --parameters ./parameters.json --blueprint-version /subscriptions/${{ secrets.SUBSCRIPTION_ID }}/providers/Microsoft.Blueprint/blueprints/SandboxBluePrint
