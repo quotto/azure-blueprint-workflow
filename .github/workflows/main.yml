@@ -46,9 +46,9 @@ jobs:
       - name: 'create security gorup of resource group owner'
         run: |
           # オーナーグループの作成
-          GROUP_ID=$(az ad group create --display-name ${{ github.event.inputs.rg-name }}-owner --mail-nickname ${{ github.event.inputs.rg-name }}-owner --force-string --query objectId -o tsv)
+          GROUP_ID=$(az ad group create --display-name ${{ github.event.inputs.rg-name }}-owner --mail-nickname ${{ github.event.inputs.rg-name }}-owner --query id -o tsv)
           # オーナーユーザーのObjectIDを取得
-          OWNER_ID=$(az ad user show --id ${{ github.event.inputs.owner }} --query objectId -o tsv)
+          OWNER_ID=$(az ad user show --id ${{ github.event.inputs.owner }} --query id -o tsv)
           # オーナーグループにオーナーユーザーを追加
           az ad group member add --group $GROUP_ID --member-id $OWNER_ID
           # GROUP_IDを環境変数にセット
