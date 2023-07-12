@@ -58,16 +58,15 @@ jobs:
         run: |
           # ブループリントのパラメータファイルを作成
           echo "{
-            \"tagValue\": {
+            \"rgName\": {
               \"value\": \"${{ github.event.inputs.rg-name }}\"
             },
-            \"rgRegion\": {
-              \"value\": \"${{ github.event.inputs.rg-region }}\"
+            \"[ユーザー名またはアプリケーション名]:所有者_RoleAssignmentName\": {
+              \"value\": [
+                \"${GROUP_ID}\"
+              ]
             },
-            \"[ユーザー名またはアプリケーション名]:所有者_RoleAssignmentName_1\": {
-              \"value\": \"${GROUP_ID}\"
-            },
-            \"リソースグループにタグを追加する_tagValue\": {
+            \"タグとその値のリソースグループへの追加_tagValue\": {
               \"value\": \"${{ github.event.inputs.department }}\"
             }
           }" > parameters.json
@@ -76,5 +75,5 @@ jobs:
         run: |
           # ブループリントの割り当て
           #
-          az blueprint assignment create --name assignment-${{ github.event.inputs.rg-name }} --subscription ${{ secrets.SUBSCRIPTION_ID }} --identity-type SystemAssigned --location ${{ github.event.inputs.rg-region }} --resource-group-value artifact_name=Application-RG location=
+          az blueprint assignment create --name assignment-${{ github.event.inputs.rg-name }} --subscription ${{ secrets.SUBSCRIPTION_ID }} --identity-type SystemAssigned --location ${{ github.event.inputs.rg-region }} --resource-group-value artifact_name=sandbox-rg location=
           ${{ github.event.inputs.rg-region }} name=test2-rg --parameters ./parameters.json --blueprint-version /subscriptions/${{ secrets.SUBSCRIPTION_ID }}/providers/Microsoft.Blueprint/blueprints/SandboxBluePrint
