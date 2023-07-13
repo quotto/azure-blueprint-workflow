@@ -69,10 +69,11 @@ jobs:
             \"タグとその値のリソースグループへの追加_tagValue\": {
               \"value\": \"${{ github.event.inputs.department }}\"
             }
-          }" > parameters.json
+          }" > ./parameters.json
 
       - name: 'create blueprint assignment'
         run: |
+          cat ./parameters.json
           # ブループリントの割り当て
           #
           az blueprint assignment create --name assignment-${{ github.event.inputs.rg-name }} --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} --identity-type SystemAssigned --location ${{ github.event.inputs.rg-region }} --resource-group-value artifact_name=sandbox-rg location=
