@@ -31,6 +31,8 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      RESOURCE_GROUP_NAME: sandbox-${{ github.event.inputs.rg-name }}-rg
     steps:
       - name: 'Az CLI login'
         uses: azure/login@v1
@@ -46,7 +48,7 @@ jobs:
       - name: 'create security gorup of resource group owner'
         run: |
           # オーナーグループの作成
-          GROUP_ID=$(az ad group create --display-name ${{ github.event.inputs.rg-name }}-owner --mail-nickname ${{ github.event.inputs.rg-name }}-owner --query id -o tsv)
+          GROUP_ID=$(az ad group create --display-name ${{ env.RESOURCE_GROUP_NAME }}-owner --mail-nickname ${{ env.RESOURCE_GROUP_NAME }}-owner --query id -o tsv)
           # オーナーユーザーのObjectIDを取得
           OWNER_ID=$(az ad user show --id ${{ github.event.inputs.owner }} --query id -o tsv)
           # オーナーグループにオーナーユーザーを追加
@@ -59,7 +61,7 @@ jobs:
           # ブループリントのパラメータファイルを作成
           echo "{
             \"resourceGroupName\": {
-              \"value\": \"${{ github.event.inputs.rg-name }}\"
+              \"value\": \"${{ env.RESOURCE_GROUP_NAME }}\"
             },
             \"ownerPrincipalId\": {
               \"value\": [
@@ -76,4 +78,4 @@ jobs:
           cat ./parameters.json
           # ブループリントの割り当て
           #
-          az blueprint assignment create --name assignment-${{ github.event.inputs.rg-name }} --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} --identity-type SystemAssigned --location ${{ github.event.inputs.rg-region }} --resource-group-value artifact_name=sandbox-rg location=${{ github.event.inputs.rg-region }} --parameters ./parameters.json --blueprint-version /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/providers/Microsoft.Blueprint/blueprints/SandboxBluePrint
+          az blueprint assignment create --name assignment-${{ env.RESOURCE_GROUP_NAME }} --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} --identity-type SystemAssigned --location ${{ github.event.inputs.rg-region }} --resource-group-value artifact_name=sandbox-rg location=${{ github.event.inputs.rg-region }} --parameters ./parameters.json --blueprint-version /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/providers/Microsoft.Blueprint/blueprints/SandboxBluePrint
