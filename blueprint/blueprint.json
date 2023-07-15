@@ -1,0 +1,51 @@
+{
+    "properties": {
+        "targetScope": "subscription",
+        "parameters": {
+            "resourceGroupName": {
+                "type": "string",
+                "allowedValues": [],
+                "defaultValue": "",
+                "metadata": {
+                    "displayName": "リソースグループの名前",
+                    "description": "resourceGroupName"
+                }
+            },
+            "tagValueOfDepartment": {
+                "type": "string",
+                "allowedValues": [],
+                "metadata": {
+                    "displayName": "departmentタグの値"
+                }
+            },
+            "listOfAllowedLocations": {
+                "type": "Array",
+                "metadata": {
+                    "description": "リソースのデプロイ時に指定できる場所の一覧。",
+                    "strongType": "location",
+                    "displayName": "許可されている場所"
+                },
+                "defaultValue": [
+                    "japaneast",
+                    "japanwest"
+                ]
+            },
+            "ownerPrincipalId": {
+                "type": "array",
+                "metadata": {
+                    "displayName": "作成するリソースグループの所有者のプリンシパルID",
+                    "strongType": "PrincipalId"
+                }
+            }
+        },
+        "resourceGroups": {
+            "sandbox-rg": {
+                "name": "[concat(concat('sandbox-',parameters('resourceGroupName')),'-rg')]",
+                "dependsOn": [],
+                "metadata": {
+                    "displayName": "sandbox-rg"
+                }
+            }
+        }
+    }
+}

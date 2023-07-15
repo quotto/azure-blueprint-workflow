@@ -1,6 +1,6 @@
 permissions:
-  id-token: write # This is required for requesting the JWT
-  contents: read  # This is required for actions/checkout
+  id-token: write
+  contents: read
 
 on:
   workflow_dispatch:
@@ -58,15 +58,15 @@ jobs:
         run: |
           # ブループリントのパラメータファイルを作成
           echo "{
-            \"rgName\": {
+            \"resourceGroupName\": {
               \"value\": \"${{ github.event.inputs.rg-name }}\"
             },
-            \"[ユーザー名またはアプリケーション名]:所有者_RoleAssignmentName\": {
+            \"ownerPrincipalId\": {
               \"value\": [
                 \"${GROUP_ID}\"
               ]
             },
-            \"タグとその値のリソースグループへの追加_tagValue\": {
+            \"tagValueOfDepartment\": {
               \"value\": \"${{ github.event.inputs.department }}\"
             }
           }" > ./parameters.json

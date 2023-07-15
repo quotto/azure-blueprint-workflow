@@ -1,0 +1,14 @@
+{
+    "kind": "policyAssignment",
+    "properties": {
+        "displayName": "許可されるリソースの場所",
+        "dependsOn": [],
+        "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/e56962a6-4747-49cd-b67b-bf8b01975c4c",
+        "parameters": {
+            "listOfAllowedLocations": {
+                "value": "[parameters('listOfAllowedLocations')]"
+            }
+        },
+        "resourceGroup": "sandbox-rg"
+    }
+}
