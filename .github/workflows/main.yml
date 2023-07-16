@@ -1,7 +1,6 @@
 permissions:
   id-token: write
   contents: read
-
 on:
   workflow_dispatch:
     inputs:
@@ -25,9 +24,6 @@ on:
         type: string
         description: 'Department'
         required: true
-
-
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -39,7 +35,6 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           branch: ${{ github.ref_name }}
-
       - name: 'install az cli extension for blueprint'
         run: |
           az extension add --name blueprint
@@ -54,7 +49,6 @@ jobs:
           az ad group member add --group $GROUP_ID --member-id $OWNER_ID
           # GROUP_IDを環境変数にセット
           echo "GROUP_ID=$GROUP_ID" >> $GITHUB_ENV
-
       - name: 'create parameters file'
         run: |
           # ブループリントのパラメータファイルを作成
@@ -74,7 +68,5 @@ jobs:
 
       - name: 'create blueprint assignment'
         run: |
-          cat ./parameters.json
           # ブループリントの割り当て
-          #
           az blueprint assignment create --name assignment-${{ github.event.inputs.rg-name }} --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} --identity-type SystemAssigned --location ${{ github.event.inputs.rg-region }} --resource-group-value artifact_name=sandbox-rg location=${{ github.event.inputs.rg-region }} --parameters ./parameters.json --blueprint-version /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/providers/Microsoft.Blueprint/blueprints/SandboxBluePrint
