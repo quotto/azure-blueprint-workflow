@@ -9,13 +9,6 @@
                 "description": "Username for the Virtual Machine."
             }
         },
-        "adminPassword": {
-            "type": "securestring",
-            "minLength": 12,
-            "metadata": {
-                "description": "Password for the Virtual Machine."
-            }
-        },
         "virtualMachines_bastion_host_name": {
             "defaultValue": "bastion-host",
             "type": "String"
@@ -60,12 +53,15 @@
             "defaultValue": "app-subnet-nsg",
             "type": "String"
         },
-        "virtualNetworks_bastion_vnet_externalid": {
-            "defaultValue": "/subscriptions/xxxxxxxx/resourceGroups/bastion-rg/providers/Microsoft.Network/virtualNetworks/bastion-vnet",
+        "ownerId": {
             "type": "String"
         }
     },
-    "variables": {},
+    "variables": {
+        "key-vault-name": "[resourceGroup().name]",
+        "virtualNetworks_bastion_vnet_externalid": "[concat(subscription().id,'/resourceGroups/bastion-rg/providers/Microsoft.Network/virtualNetworks/bastion-vnet')]",
+        "admin-password": "[concat('1@Aa',uniqueString(resourceGroup().name))]"
+    },
     "resources": [
         {
             "type": "Microsoft.Network/networkSecurityGroups",
@@ -125,36 +121,6 @@
                         "10.1.0.0/24"
                     ]
                 },
-                "subnets": [
-                    {
-                        "name": "[parameters('virtualNetworks_subnet_bastion_host_subnet_name')]",
-                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_bastion_host_vnet_name'), parameters('virtualNetworks_subnet_bastion_host_subnet_name'))]",
-                        "properties": {
-                            "addressPrefix": "10.1.0.0/26",
-                            "delegations": [],
-                            "privateEndpointNetworkPolicies": "Disabled",
-                            "privateLinkServiceNetworkPolicies": "Enabled"
-                        },
-                        "type": "Microsoft.Network/virtualNetworks/subnets"
-                    }
-                ],
-                "virtualNetworkPeerings": [
-                    {
-                        "name": "[parameters('virtualNetworksPeering_bastion_vnet')]",
-                        "id": "[resourceId('Microsoft.Network/virtualNetworks/virtualNetworkPeerings', parameters('virtualNetworks_bastion_host_vnet_name'), parameters('virtualNetworksPeering_bastion_vnet'))]",
-                        "properties": {
-                            "remoteVirtualNetwork": {
-                                "id": "[parameters('virtualNetworks_bastion_vnet_externalid')]"
-                            },
-                            "allowVirtualNetworkAccess": true,
-                            "allowForwardedTraffic": true,
-                            "allowGatewayTransit": false,
-                            "useRemoteGateways": false,
-                            "doNotVerifyRemoteGateways": false
-                        },
-                        "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings"
-                    }
-                ],
                 "enableDdosProtection": false
             }
         },
@@ -193,7 +159,7 @@
                 "osProfile": {
                     "computerName": "[parameters('virtualMachines_bastion_host_name')]",
                     "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPassword')]",
+                    "adminPassword": "[variables('admin-password')]",
                     "windowsConfiguration": {
                         "provisionVMAgent": true,
                         "enableAutomaticUpdates": true,
@@ -249,23 +215,6 @@
             }
         },
         {
-            "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
-            "apiVersion": "2022-11-01",
-            "name": "[concat(concat(parameters('virtualNetworks_bastion_host_vnet_name'), '/'), parameters('virtualNetworksPeering_bastion_vnet'))]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_bastion_host_vnet_name'))]"
-            ],
-            "properties": {
-                "remoteVirtualNetwork": {
-                    "id": "[parameters('virtualNetworks_bastion_vnet_externalid')]"
-                },
-                "allowVirtualNetworkAccess": true,
-                "allowForwardedTraffic": true,
-                "allowGatewayTransit": false,
-                "useRemoteGateways": false
-            }
-        },
-        {
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2022-11-01",
             "name": "[parameters('networkInterfaces_bastion_host_nic_name')]",
@@ -280,11 +229,8 @@
                     {
                         "name": "ipconfig1",
                         "id": "[concat(resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_bastion_host_nic_name')), '/ipConfigurations/ipconfig1')]",
-                        "etag": "W/\"23993781-c107-4c87-a411-deaafe6efe83\"",
                         "type": "Microsoft.Network/networkInterfaces/ipConfigurations",
                         "properties": {
-                            "provisioningState": "Succeeded",
-                            "privateIPAddress": "10.1.0.4",
                             "privateIPAllocationMethod": "Dynamic",
                             "subnet": {
                                 "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_bastion_host_vnet_name'), parameters('virtualNetworks_subnet_bastion_host_subnet_name'))]"
@@ -320,36 +266,6 @@
                         "10.2.0.0/24"
                     ]
                 },
-                "subnets": [
-                    {
-                        "name": "[parameters('virtualNetworks_subnet_app_subnet_name')]",
-                        "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_app_vnet_name'), parameters('virtualNetworks_subnet_app_subnet_name'))]",
-                        "properties": {
-                            "addressPrefix": "10.2.0.0/26",
-                            "delegations": [],
-                            "privateEndpointNetworkPolicies": "Disabled",
-                            "privateLinkServiceNetworkPolicies": "Enabled"
-                        },
-                        "type": "Microsoft.Network/virtualNetworks/subnets"
-                    }
-                ],
-                "virtualNetworkPeerings": [
-                    {
-                        "name": "[parameters('virtualNetworksPeering_app_vnet')]",
-                        "id": "[resourceId('Microsoft.Network/virtualNetworks/virtualNetworkPeerings', parameters('virtualNetworks_app_vnet_name'), parameters('virtualNetworksPeering_app_vnet'))]",
-                        "properties": {
-                            "remoteVirtualNetwork": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_bastion_host_vnet_name'))]"
-                            },
-                            "allowVirtualNetworkAccess": true,
-                            "allowForwardedTraffic": true,
-                            "allowGatewayTransit": false,
-                            "useRemoteGateways": false,
-                            "doNotVerifyRemoteGateways": false
-                        },
-                        "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings"
-                    }
-                ],
                 "enableDdosProtection": false
             }
         },
@@ -373,9 +289,28 @@
         {
             "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
             "apiVersion": "2022-11-01",
+            "name": "[concat(concat(parameters('virtualNetworks_bastion_host_vnet_name'), '/'), parameters('virtualNetworksPeering_bastion_vnet'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_bastion_host_vnet_name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_bastion_host_vnet_name'),parameters('virtualNetworks_subnet_bastion_host_subnet_name'))]"
+            ],
+            "properties": {
+                "remoteVirtualNetwork": {
+                    "id": "[variables('virtualNetworks_bastion_vnet_externalid')]"
+                },
+                "allowVirtualNetworkAccess": true,
+                "allowForwardedTraffic": true,
+                "allowGatewayTransit": false,
+                "useRemoteGateways": false
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+            "apiVersion": "2022-11-01",
             "name": "[concat(concat(parameters('virtualNetworks_app_vnet_name'), '/'), parameters('virtualNetworksPeering_app_vnet'))]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_app_vnet_name'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_app_vnet_name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets',parameters('virtualNetworks_app_vnet_name'), parameters('virtualNetworks_subnet_app_subnet_name'))]"
             ],
             "properties": {
                 "remoteVirtualNetwork": {
@@ -393,7 +328,8 @@
             "apiVersion": "2022-11-01",
             "name": "[concat(concat(parameters('virtualNetworks_bastion_host_vnet_name'), '/'), parameters('virtualNetworksPeering_app_vnet'))]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_app_vnet_name'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_app_vnet_name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_app_vnet_name'), parameters('virtualNetworks_subnet_app_subnet_name'))]"
             ],
             "properties": {
                 "remoteVirtualNetwork": {
@@ -405,6 +341,55 @@
                 "useRemoteGateways": false,
                 "doNotVerifyRemoteGateways": false
             }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2023-02-01",
+            "name": "[variables('key-vault-name')]",
+            "location": "japaneast",
+            "properties": {
+                "tenantId": "[tenant().tenantId]",
+                "sku": {
+                    "family": "A",
+                    "name": "Standard"
+                },
+                "enabledForDeployment": true,
+                "enabledForDiskEncryption": false,
+                "enabledForTemplateDeployment": false,
+                "enableSoftDelete": true,
+                "softDeleteRetentionInDays": 7,
+                "enableRbacAuthorization": true,
+                "publicNetworkAccess": "Enabled"
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults/secrets",
+            "apiVersion": "2023-02-01",
+            "name": "[concat(variables('key-vault-name'), '/vmPasswords')]",
+            "location": "japaneast",
+            "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', variables('key-vault-name'))]"
+            ],
+            "properties": {
+                "attributes": {
+                    "enabled": true
+                },
+                "value": "[variables('admin-password')]"
+            }
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2020-04-01-preview",
+            "scope": "[format('Microsoft.KeyVault/vaults/{0}', variables('key-vault-name'))]",
+            "name": "[guid('21090545-7ca7-4776-b22c-e363652d74d2', resourceId('Microsoft.KeyVault/vaults', variables('key-vault-name')))]",
+            "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '21090545-7ca7-4776-b22c-e363652d74d2')]",
+                "principalId": "[parameters('ownerId')]",
+                "principalType": "User"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', variables('key-vault-name'))]"
+            ]
         }
     ]
 }
